@@ -20,7 +20,7 @@ class RedisClient {
                 this.connected = true;
             })
             .catch((err) => {
-                console.log('Failed to connect to redis');
+                console.error('Failed to connect to redis');
                 this.connected = false;
             })
     }
@@ -48,10 +48,23 @@ class RedisClient {
             try {
                 await this.client.set(key, value, { EX: duration });
             } catch (err) {
-                return null;
+                console.error(`Error setting key "${key}"`, err);
             }
-        } else {
-            return null;
+        }
+    }
+    // async function 'del' that takes key (str) as argument and removes the value from Redis
+    async del(key) {
+        if (this.isAlive()) {
+            try {
+                await this.client.del(key);
+            } catch (err) {
+                console.error(`Error deleting key "${key}"`, err);
+            }
         }
     }
 }
+
+// Create and export instance of RedisClient
+const redisClient = new RedisClient();
+module.exports = redisClient;
+
