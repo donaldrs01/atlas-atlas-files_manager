@@ -5,12 +5,13 @@ dotenv.config();
 
 class DBClient {
     constructor() {
-        // Client creation using environmental (or deafult) variables
-        const host = process.env.DB_HOST || 'localhost';
-        const port = process.env.DB_PORT || '27017';
-        const database = process.env.DB_DATABASE || 'files_manager';
+        
+        // Client creation using environmental variables stored in .env
+        const host = process.env.DB_HOST;
+        const port = process.env.DB_PORT;
+        const database = process.env.DB_DATABASE;
         // Use this to build the URI connection string
-        const uri = `mongodb://${host}:${port}/${database}`;
+        const uri = `mongodb://${host}:${port}/${database}`;        
         // Initialize client
         this.client = new MongoClient(uri, { useUnifiedTopology: true});
         this.connected = false;
