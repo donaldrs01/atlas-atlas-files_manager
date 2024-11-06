@@ -5,13 +5,8 @@ dotenv.config();
 
 class DBClient {
     constructor() {
-        
         // Client creation using environmental variables stored in .env
-        const host = process.env.DB_HOST;
-        const port = process.env.DB_PORT;
-        const database = process.env.DB_DATABASE;
-        // Use this to build the URI connection string
-        const uri = `mongodb://${host}:${port}/${database}`;        
+        const uri = process.env.DB_URI;       
         // Initialize client
         this.client = new MongoClient(uri, { useUnifiedTopology: true});
         this.connected = false;
@@ -25,7 +20,7 @@ class DBClient {
             console.log('Successfully connected to MongoDB');
 
             // Allows this.db to reference DB as part of construction after successful connection
-            this.db = this.client.db(database);
+            this.db = this.client.db(process.env.DB_DATABASE);
         })
         .catch((err) => {
             console.error('Failure to connect to MongoDB', err);
@@ -38,4 +33,29 @@ class DBClient {
         return this.connected
     }
 
+    // nbUsers function
+    async nbUsers() {
+        try {
+            const userCollection = this.db.collection("users");
+            const docCount = await userCollection.countDocuments();
+            return docCount;
+        } catch (err) {
+            console.error('Error fetching users collection count', err);
+        }
+    }
+
+    // nbFiles function
+    async nbFiles() {
+        try {
+            const filesCollection = this.db.collection('files');
+            const docCount = await filesCollection.countDocuments();
+            return docCount;
+        } catch (err) {
+            console.error('Error fetching files collection count', err);
+        }
+    }
 }
+
+// Create and export instance of dbClient
+const dbClient = new DBClient();
+module.exports = dbClient;
