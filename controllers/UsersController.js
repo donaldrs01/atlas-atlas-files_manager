@@ -35,6 +35,7 @@ class UsersController {
             return res.status(201).json({ id: userCreation.insertedId, email});
         } catch (err) {
             console.error('Error creating user:', err);
+            return res.status(500).json({ error: "Server error"});
         }
     }
 }
