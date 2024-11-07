@@ -18,7 +18,8 @@ class UsersController {
 
         // Checking if email already exists in DB
         try {
-            const emailExists = await dbClient.findUser(email);
+            const usersCollection = dbClient.getCollection('users');
+            const emailExists = await usersCollection.findOne({email});
             if (emailExists) {
                 return res.status(400).json({ error: "Already exists"});
             }
@@ -30,7 +31,7 @@ class UsersController {
                 email:email,
                 password: hashedPassword,
             }
-            const userCreation = await dbClient.createUser(newUser);
+            const userCreation = await usersCollection.insertOne(newUser);
             // Return newUser credentials (email and auto-generated ID)
             return res.status(201).json({ id: userCreation.insertedId, email});
         } catch (err) {
