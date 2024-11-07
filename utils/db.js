@@ -33,10 +33,20 @@ class DBClient {
         return this.connected
     }
 
+    // Method to grab collection by name
+    getCollection(name) {
+        if (this.db) {
+            return this.db.collection(name);
+        } else {
+            console.error('Database is not connected');
+            return null;
+        }
+    }
+
     // nbUsers function
     async nbUsers() {
         try {
-            const userCollection = this.db.collection("users");
+            const userCollection = this.getCollection("users");
             const docCount = await userCollection.countDocuments();
             return docCount;
         } catch (err) {
@@ -47,7 +57,7 @@ class DBClient {
     // nbFiles function
     async nbFiles() {
         try {
-            const filesCollection = this.db.collection('files');
+            const filesCollection = this.getCollection('files');
             const docCount = await filesCollection.countDocuments();
             return docCount;
         } catch (err) {
