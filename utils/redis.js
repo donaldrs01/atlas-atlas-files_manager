@@ -14,15 +14,10 @@ class RedisClient {
         });
 
         // if client connects successfully, set connected flag to true, otherwise false
-        this.client.connect()
-            .then(() => {
-                console.log('Connected to Redis');
-                this.connected = true;
-            })
-            .catch((err) => {
-                console.error('Failed to connect to redis');
-                this.connected = false;
-            })
+        this.client.on('connect', () => {
+            console.log('Connected to Redis');
+            this.connected = true;
+        });
     }
     // isAlive function returns value of connected flag to check status
     isAlive() {
@@ -67,4 +62,3 @@ class RedisClient {
 // Create and export instance of RedisClient
 const redisClient = new RedisClient();
 module.exports = redisClient;
-
