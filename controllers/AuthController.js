@@ -14,11 +14,29 @@ class AuthController {
         // convert from b64 to readable ASCII string
         const creds = Buffer.from(base64Creds, 'base64').toString('ascii');
         // split incoming string into email / password
-        const [email, password] = credentials.split(':');
+        const [email, password] = creds.split(':');
 
         if (!email || !password) {
             return res.status(401).send({ error: 'Unauthorized'});
         }
-        // Password hashing
+        // Check for hashed password
+        const hashedPassword = sha1(password);
+        // Check for user
+        try {
+            const user = await dbClient.db.collection('users').findOne({ email, password: hashedPassword});
+            if (!user) {
+                return res.status(401).send({ error: 'Unauthorized' });
+            }
+            // If user in DB, generate token
+            const token = uuidv4();
+            const tokenKey = `auth_${token}`;
+            // Store token for 24 hours (86400 secs)
+            await RedisClient.set(tokenKey, user._id.toString(), 86400);
+
+            return res.status(200).send({ token });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send({ error: 'Server error'})
+        }
     }
 }
