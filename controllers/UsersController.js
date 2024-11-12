@@ -1,6 +1,7 @@
 const sha1 = require('sha1');
 const dbClient = require('../utils/db');
 const { ObjectId } = require('mongodb');
+const RedisClient = require('../utils/redis');
 
 class UsersController {
     static async postNew(req, res) {
@@ -22,22 +23,22 @@ class UsersController {
             const usersCollection = dbClient.getCollection('users');
             const emailExists = await usersCollection.findOne({email});
             if (emailExists) {
-                return res.status(400).json({ error: "Already exists"});
+                return res.status(400).json({ error: "Already exists" });
             }
             // If password unique...
             // Hash password using SHA1
             const hashedPassword = sha1(password);
             // Create new user with email/password
             const newUser = {
-                email:email,
+                email: email,
                 password: hashedPassword,
             }
             const userCreation = await usersCollection.insertOne(newUser);
             // Return newUser credentials (email and auto-generated ID)
-            return res.status(201).json({ id: userCreation.insertedId, email});
+            return res.status(201).json({ id: userCreation.insertedId, email });
         } catch (err) {
             console.error('Error creating user:', err);
-            return res.status(500).json({ error: "Server error"});
+            return res.status(500).json({ error: "Server error" });
         }
     }
     static async getMe(req, res) {
