@@ -1,4 +1,6 @@
 //
+require('dotenv').config(); // Load environmental variables
+
 const express = require('express');
 const routes = require('./routes/index');
 

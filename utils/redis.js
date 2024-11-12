@@ -1,9 +1,9 @@
-import { createClient } from "redis";
+const redis = require('redis');
 
 class RedisClient {
     constructor() {
         // create client
-        this.client = createClient();
+        this.client = redis.createClient();
         // set connection flag to false initially
         this.connected = false;
 
@@ -27,12 +27,14 @@ class RedisClient {
     // asynchronous function 'get' to retrieve value stored at given key
     async get(key) {
         if (this.isAlive()) {
-            try {
-                const value = await this.client.get(key);
-                return value;
-            } catch (err) {
-                return null;
-            }
+            return new Promise((resolve, reject) => {
+                this.client.get(key, (err, value) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve(value);
+                });
+            });
         } else {
             return null;
         }
@@ -40,21 +42,27 @@ class RedisClient {
     // asynchronous function 'set' to set a value at a certain key with given expiration time in seconds
     async set(key, value, duration) {
         if (this.isAlive()) {
-            try {
-                await this.client.set(key, value, { EX: duration });
-            } catch (err) {
-                console.error(`Error setting key "${key}"`, err);
-            }
+            return new Promise((resolve, reject) => {
+                this.client.set(key, value, 'EX', duration, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve();
+                });
+            });
         }
     }
     // async function 'del' that takes key (str) as argument and removes the value from Redis
     async del(key) {
         if (this.isAlive()) {
-            try {
-                await this.client.del(key);
-            } catch (err) {
-                console.error(`Error deleting key "${key}"`, err);
-            }
+            return new Promise((resolve, reject) => {
+                this.client.del(key, (err) => {
+                    if (err) {
+                        return reject(err);
+                    }
+                    resolve();
+                });
+            });
         }
     }
 }
