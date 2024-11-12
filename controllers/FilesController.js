@@ -79,6 +79,30 @@ class FilesController {
             return res.status(500).send({ error: 'Server error' });
         }
     }
+    static async getShow(req, res) {
+        // handles logic of GET '/files/:id' endpoint
+        const token = req.headers['x-token'];
+        // Retrieve ID from X-Token
+        const userId = await RedisClient.get(`auth_${token}`);
+        if (!userId) {
+            return res.status(401).send({ error: 'Unauthorized' });
+        }
+        // retrieve fileID from parameters
+        const { id: fileId } = req.params
+        // retrieve file from collection using fileId matching with _id
+        const file = await dbClient.getCollection('files').findOne({ _id: ObjectId(fileId) });
+        // if no file or if file user id doesn't match given id, return error
+        if (!file) {
+            return res.status(404).send({ error: 'Not found' });
+        }
+        if (file.userId !== userId) {
+            return res.status(404).send({ error: 'Not found' });
+        }
+        // return found file
+        return res.status(200).send(file);
+    }
+
+
 }
 
 module.exports = FilesController;
