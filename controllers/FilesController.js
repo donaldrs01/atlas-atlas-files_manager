@@ -79,8 +79,8 @@ class FilesController {
             return res.status(500).send({ error: 'Server error' });
         }
     }
+    // handles logic of GET '/files/:id' endpoint
     static async getShow(req, res) {
-        // handles logic of GET '/files/:id' endpoint
         const token = req.headers['x-token'];
         // Retrieve ID from X-Token
         const userId = await RedisClient.get(`auth_${token}`);
@@ -101,8 +101,44 @@ class FilesController {
         // return found file
         return res.status(200).send(file);
     }
+    // handles logic for GET '/files' with certain parentID and using pagination
+    static async getIndex(req, res) {
+        const token = req.headers['x-token'];
+        // Retrieve ID from X-Token
+        const userId = await RedisClient.get(`auth_${token}`);
+        if (!userId) {
+            return res.status(401).send({ error: 'Unauthorized' });
+        }
+        // store parent id and page from query with default values
+        const { parentId = 0, page = 0 } = req.query;
 
+        // make sure page number is an int of base 10
+        const pageNumber = parseInt(page, 10);
+        if (isNaN(pageNumber) || pageNumber < 0) {
+            return res.status(400).send({ error: 'Invalid page number' });
+        }
+        const parsedParentId = parseInt(parentId, 10);
+        if (isNaN(parsedParentId)) {
+            return res.status(400).send({ error: 'Invalid parentId' });
+        }
+        try {
+            // get files collection and query using parentId
+            const filesCollection = dbClient.getCollection('files');
 
+            const query = { parentId: parsedParentId };
+            // aggregate filesCollection using pagination and store in files
+            const files = await filesCollection.aggregate([
+                { $match: query },
+                { $skip: pageNumber * 20 },
+                { $limit: 20 }
+            ]).toArray();
+            // return list of files
+            return res.status(200).send(files);
+        } catch (err) {
+            console.error('Error fetching files', err);
+            return res.status(500).send({ error: 'Server error' });
+        }
+    }
 }
 
 module.exports = FilesController;
