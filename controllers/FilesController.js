@@ -117,7 +117,7 @@ class FilesController {
         if (parentId === '0') {
             parentQuery = { parentId: 0 };
         } else if (ObjectId.isValid(parentId)) {
-            parentQuery = { parentId: new ObjectId(parentId) };
+            parentQuery = { parentId: parentId };
         } else {
             return res.status(400).send({ error: 'Invalid parentId' });
         }
