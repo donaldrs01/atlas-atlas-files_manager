@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const RedisClient = require('../utils/redis');
+const mime = require('mime-types');
 
 class FilesController {
     // Handles logic of POST /files endpoint
@@ -201,6 +202,47 @@ class FilesController {
         } catch (err) {
             console.error('Error updating file', err);
             return res.status(500).send({ error: 'Server error' });
+        }
+    }
+
+    static async getFile(req, res) {
+        const { id: fileId } = req.params;
+        const token = req.headers['x-token'];
+        const userId = await RedisClient.get(`auth_${token}`);
+        // Find the file by its fileId
+        const file = await dbClient.getCollection('files').findOne({_id: new ObjectId(fileId) });
+        if (!file) { // No file linked to ID
+            return res.status(404).send({ error: 'Not found' });
+        }
+        // Debug log
+        console.log("File found:", file);
+
+        // Authorization check: file is public OR user is owner of the file
+        if (!file.isPublic && (!userId || file.userId !== userId)) {
+            return res.status(404).send({ error: 'Not found'} );
+        }
+        // Check if file is a folder
+        if (file.type === 'folder') {
+            return res.status(400).send({ error: "A folder doesn't have content" });
+        }
+        // Check for local path storage
+        const correctedPath = path.normalize(file.localPath);
+        // Debug log
+        console.log("Checking local file exists at path:", correctedPath);
+        if (!fs.existsSync(correctedPath)) {
+            console.log("File does not exist locally at path:", correctedPath);
+            return res.status(404).send({ error: 'Not found' });
+        }
+        // Get MIME type and set it as content-type in res.header
+        const mimeType = mime.lookup(file.name);
+        res.setHeader('Content-Type', mimeType);
+        // Return file content
+        try {
+            const fileContent = fs.readFileSync(correctedPath);
+            return res.status(200).send(fileContent);
+        } catch (err) {
+            console.error('Error reading file', err);
+            return res.status(400).send({ error: 'Server error' });
         }
     }
 }
