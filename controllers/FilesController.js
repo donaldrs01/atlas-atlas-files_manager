@@ -140,6 +140,32 @@ class FilesController {
             return res.status(500).send({ error: 'Server error' });
         }
     }
+    static async putPublish(req, res) {
+        const token = req.headers['x-token'];
+        // Retrieve ID from X-Token
+        const userId = await RedisClient.get(`auth_${token}`);
+        if (!userId) {
+            return res.status(401).send({ error: 'Unauthorized' });
+        }
+        const { id: fileId } = req.params;
+        try {
+            const file = await dbClient.getCollection('files').findOne({ _id: ObjectId(fileId) });
+            if (!file) {
+                return res.status(404).send({ error: 'Not Found'});
+            }
+            if (file.userId !== userId) {
+                return res.status(404).send({ error: 'Not found'});
+            }
+            await dbClient.getCollection('files').updateOne(
+                { _id: ObjectId(fileId) },
+                { $set: { isPublic: true } }
+            );
+            const updatedFile = await dbClient.getCollection('files').findOne({ _id: ObjectId(fileId) });
+            return res.status(200).send(updatedFile);
+        } catch (err) {
+            console.error('Error updating file', err)
+        }
+    }
 }
 
 module.exports = FilesController;
