@@ -5,10 +5,15 @@ const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const RedisClient = require('../utils/redis');
 const mime = require('mime-types');
+const Queue = require('bull');
+
+const fileQueue = new Queue('fileQueue');
 
 class FilesController {
     // Handles logic of POST /files endpoint
     static async postUpload(req, res) {
+
+        
         // Retrieve ID from X-Token
         const token = req.headers['x-token'];
         const userId = await RedisClient.get(`auth_${token}`);
