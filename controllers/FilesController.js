@@ -190,17 +190,18 @@ class FilesController {
             }
             if (file.userId !== userId) {
                 return res.status(403).send({ error: "User doesn't have access to file"});
+            }
+            // Update isPublic to false
+            await dbClient.getCollection('files').updateOne(
+                { _id: ObjectId(fileId) },
+                { $set: { isPublic: false } }
+            );
+            const updatedFile = await dbClient.getCollection('files').findOne({ _id: ObjectId(fileId) });
+            return res.status(200).send(updatedFile);
+        } catch (err) {
+            console.error('Error updating file', err);
+            return res.status(500).send({ error: 'Server error' });
         }
-        // Update isPublic to false
-        await dbClient.getCollection('files').updateOne(
-            { _id: ObjectId(fileId) },
-            { $set: { isPublic: false } }
-        );
-        const updatedFile = await dbClient.getCollection('files').findOne({ _id: ObjectId(fileId) });
-        return res.status(200).send(updatedFile);
-    } catch (err) {
-        console.error('Error updating file', err);
-        return res.status(500).send({ error: 'Server error' });
     }
 }
 
