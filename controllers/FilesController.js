@@ -110,28 +110,29 @@ class FilesController {
             return res.status(401).send({ error: 'Unauthorized' });
         }
         // store parent id and page from query with default values
-        const { parentId = 0, page = 0 } = req.query;
+        const { parentId = '0', page = 0 } = req.query;
+        let parentQuery;
 
-        // make sure page number is an int of base 10
-        const pageNumber = parseInt(page, 10);
-        if (isNaN(pageNumber) || pageNumber < 0) {
-            return res.status(400).send({ error: 'Invalid page number' });
-        }
-        const parsedParentId = parseInt(parentId, 10);
-        if (isNaN(parsedParentId)) {
+        if (parentId === '0') {
+            parentQuery = { parentId: 0 };
+        } else if (ObjectId.isValid(parentId)) {
+            parentQuery = { parentId: new ObjectId(parentId) };
+        } else {
             return res.status(400).send({ error: 'Invalid parentId' });
         }
-        try {
-            // get files collection and query using parentId
-            const filesCollection = dbClient.getCollection('files');
 
-            const query = { parentId: parsedParentId };
+        const pageNumber = parseInt(page, 10);
+        try {
+            // 
+            const filesCollection = dbClient.getCollection('files');
+            const offset = pageNumber * 20;
+
             // aggregate filesCollection using pagination and store in files
-            const files = await filesCollection.aggregate([
-                { $match: query },
-                { $skip: pageNumber * 20 },
-                { $limit: 20 }
-            ]).toArray();
+            const files = await filesCollection
+                .find(parentQuery)
+                .skip(offset)
+                .limit(20)
+                .toArray();
             // return list of files
             return res.status(200).send(files);
         } catch (err) {
