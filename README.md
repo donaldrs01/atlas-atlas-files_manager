@@ -11,12 +11,12 @@ We used a routing system to organize our different endpoints and associate them 
 
 For user authentication, we set up a /connect and /disconnect endpoint. After extracting user info, our application uses SHA1 password hashing to authorize the user for DB access. Once granted access, they are generated a token which has a 24-hour lifespan and are allowed user access to our file management system.
 
-Once connected to the MongoDB, users have access to set a file operation endpoints which allow for the uploading, retrieval and listing of various files.
-**Upload Files**
-To upload files, utilize the /files/upload endpoint. The metadata will be stored in MongoDB and a unique fileID is created for the file.
-**Retrieve Files**
-For file retrieval, utilize the /files/:id endpoint, where 'id' references the unique file ID. This endpoint will retrieve the metadata of the file along with any file content.
-**Listing Files**
+Once connected to the MongoDB, users have access to set a file operation endpoints which allow for the uploading, retrieval and listing of various files.  
+**Upload Files**  
+To upload files, utilize the /files/upload endpoint. The metadata will be stored in MongoDB and a unique fileID is created for the file.  
+**Retrieve Files**  
+For file retrieval, utilize the /files/:id endpoint, where 'id' references the unique file ID. This endpoint will retrieve the metadata of the file along with any file content.  
+**Listing Files**  
 To list all files, utilize the /files endpoint. For larger datasets, our application uses pagination as it returns the appropriate data.
 
 For further security, the /files/:id/publish and /files/:id/unpublish endpoints can be used by authenticated users to make certain files publicly accessible or to make them private again. 
