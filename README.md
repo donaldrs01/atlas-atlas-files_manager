@@ -14,7 +14,7 @@ For user authentication, we set up a /connect and /disconnect endpoint. After ex
 Once connected to the MongoDB, users have access to set a file operation endpoints which allow for the uploading, retrieval and listing of various files.  
 
 **Upload Files**  
-To upload files, utilize the /files/upload endpoint. The metadata will be stored in MongoDB and a unique fileID is created for the file.  
+To upload files, send a POST request to the /files endpoint. The metadata will be stored in MongoDB and a unique fileID is created for the file.  
 
 **Retrieve Files**  
 For file retrieval, utilize the /files/:id endpoint, where 'id' references the unique file ID. This endpoint will retrieve the metadata of the file along with any file content.  
