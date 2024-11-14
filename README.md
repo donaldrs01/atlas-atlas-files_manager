@@ -1,1 +1,1 @@
-Placeholder README
+The files manager project is a culmination of several of the core concepts of our fourth trimsester at Atlas. It creates an API that handles the uploading, saving and retrieval of different file types that are stored in a database.
