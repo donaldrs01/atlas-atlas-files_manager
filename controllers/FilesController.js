@@ -5,10 +5,13 @@ const { ObjectId } = require('mongodb');
 const dbClient = require('../utils/db');
 const RedisClient = require('../utils/redis');
 const mime = require('mime-types');
+const Queue = require('bull');
+const { fileQueue } = require('../worker');
 
 class FilesController {
     // Handles logic of POST /files endpoint
     static async postUpload(req, res) {
+        
         // Retrieve ID from X-Token
         const token = req.headers['x-token'];
         const userId = await RedisClient.get(`auth_${token}`);
@@ -74,6 +77,10 @@ class FilesController {
         // Insert the newFile into the 'files' collection of DB
         try {
             const result = await dbClient.getCollection('files').insertOne(newFile);
+            console.log('file inserted', result);
+            if (type === 'image') {
+                await fileQueue.add({ userId, fileId: result.insertedId });
+            }
             return res.status(201).send({ id: result.insertedId, ...newFile});
         } catch (err) {
             console.error('Error inserting file into database', err);
@@ -206,7 +213,7 @@ class FilesController {
     }
 
     static async getFile(req, res) {
-        const { id: fileId } = req.params;
+        const { id: fileId, size } = req.params;
         const token = req.headers['x-token'];
         const userId = await RedisClient.get(`auth_${token}`);
         // Find the file by its fileId
@@ -216,7 +223,11 @@ class FilesController {
         }
         // Debug log
         console.log("File found:", file);
-
+        // if size is passed as parameter, extract and create file path
+        // using extracted directory name, file id, size, and original path ext name
+        if (size) {
+            filePath = path.join(path.dirname(file.localPath), `${fileId}_${size}${path.extname(file.localPath)}`);
+        }
         // Authorization check: file is public OR user is owner of the file
         if (!file.isPublic && (!userId || file.userId !== userId)) {
             return res.status(404).send({ error: 'Not found'} );
@@ -248,3 +259,12 @@ class FilesController {
 }
 
 module.exports = FilesController;
+
+// 57ec20ed-b688-4ebd-906c-2783b9e86a7b
+// file id 6733ac065c1c972761ba2507
+// 
+// curl -XGET 0.0.0.0:5000/files/6735420ded27e4be8fd04f2b/data -so new_image.png ; file new_image.png
+// curl -XGET 0.0.0.0:5000/files/6735420ded27e4be8fd04f2b/data?size=250 -so new_image.png ; file new_image.png
+// curl -X POST http://0.0.0.0:5000/files -H "X-Token: 57ec20ed-b688-4ebd-906c-2783b9e86a7b" -H "Content-Type: application/json" -d '{"name": "new_image.png", "type": "file", "data": "'$(base64 -w 0 new_image.png)'"}'
+// python3 image_upload.py new_image.png 57ec20ed-b688-4ebd-906c-2783b9e86a7b 6733ac065c1c972761ba2507
+// curl -XPUT 0.0.0.0:5000/files/6735420ded27e4be8fd04f2b/publish -H "X-Token: 57ec20ed-b688-4ebd-906c-2783b9e86a7b" ; echo ""
